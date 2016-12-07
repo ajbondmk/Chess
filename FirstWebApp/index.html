@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+    <title>Chess</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body style="background-color:whitesmoke" ng-controller="chessController">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="Scripts/angular.min.js"></script>
+    <script src="app/app.module.js"></script>
+    <script src="app/main.js"></script>
+
+    <style>
+        html, body, .container-fluid { height: 100%; }
+        .container-fluid { padding: 10px; }
+        .col-sm-6 { max-width: 100vh; }
+        .chessboard { border: thin solid black; }
+        .black, .white { width: 12.5%; float: left; border: thin solid black; }
+        .black { background-color: gray; }
+        .white { background-color: lightgray; }
+        .highlighted { background-color: royalblue; }
+        .selected { background-color: darkturquoise; }
+        .piece { width: 100%; }
+        .box { background-color: #EDEDED; }
+        .piecesTaken { border: 2px solid black; }
+    </style>
+
+    <div class="container-fluid" align="center">
+        <div class="row">
+            <!--CHESSBOARD-->
+            <div class="col-sm-6">
+                <table class="chessboard">
+                    <tr ng-repeat="row in board">
+                        <td ng-repeat="square in row" class="{{square.squareColour}}"
+                            ng-class="{'highlighted': square.highlighted, 'selected': square.selected}">
+                            <img class="piece" ng-src="PicsForApp/{{square.colour}}_{{square.name}}.png"
+                                 ng-click='squareClicked(square.row, square.col)' />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!--RIGHT OR BOTTOM OF SCREEN-->
+            <div class="col-sm-6">
+
+                <table>
+
+                    <!--ROW 1-->
+                    <tr>
+
+                        <!--CURRENT TURN COLOUR / WHO WON-->
+                        <td>
+                            <img class="piece" ng-src="PicsForApp/White'sTurn1.png" ng-show="!blackTurn() && !checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/Black'sTurn1.png" ng-show="blackTurn() && !checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/WhitePlayerWins1.png" ng-show="blackTurn() && (checkmate || hasConceded)" />
+                            <img class="piece" ng-src="PicsForApp/BlackPlayerWins1.png" ng-show="!blackTurn() && (checkmate || hasConceded)" />
+                        </td>
+                        <td>
+                            <img class="piece" ng-src="PicsForApp/White'sTurn2.png" ng-show="!blackTurn() && !checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/Black'sTurn2.png" ng-show="blackTurn() && !checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/WhitePlayerWins2.png" ng-show="blackTurn() && (checkmate || hasConceded)" />
+                            <img class="piece" ng-src="PicsForApp/BlackPlayerWins2.png" ng-show="!blackTurn() && (checkmate || hasConceded)" />
+                        </td>
+                        <td>
+                            <img class="piece" ng-src="PicsForApp/_.png" ng-show="!checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/WhitePlayerWins3.png" ng-show="blackTurn() && (checkmate || hasConceded)" />
+                            <img class="piece" ng-src="PicsForApp/BlackPlayerWins3.png" ng-show="!blackTurn() && (checkmate || hasConceded)" />
+                        </td>
+
+                        <!--THE MIDDLE OF THAT ROW-->
+                        <td ng-repeat="n in [1, 2, 3]">
+                            <img class="piece" ng-src="PicsForApp/_.png" />
+                        </td>
+
+                        <!--CONCEDE / NEW GAME BUTTON-->
+                        <td align="right">
+                            <img class="piece" style="width: 60%" ng-src="PicsForApp/Concede1.png" ng-show="!checkmate && !hasConceded" ng-click="concede()" />
+                            <img class="piece" style="width: 60%" ng-src="PicsForApp/NewGame1.png" ng-show="checkmate || hasConceded" ng-click="newGame()" />
+                        </td>
+                        <td align="left">
+                            <img class="piece" style="width: 60%" ng-src="PicsForApp/Concede2.png" ng-show="!checkmate && !hasConceded" ng-click="concede()" />
+                            <img class="piece" style="width: 60%" ng-src="PicsForApp/NewGame2.png" ng-show="checkmate || hasConceded" ng-click="newGame()" />
+                        </td>
+
+                    </tr>
+
+                    <!--ROW 2-->
+
+                    <tr>
+
+                        <!--CHECK / CHECKMATE / CONCEDED-->
+                        <td>
+                            <img class="piece" ng-src="PicsForApp/_.png" ng-show="!check && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/Check.png" ng-show="check && !checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/Checkmate1.png" ng-show="checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/WhiteConcedes1.png" ng-show="hasConceded && !blackTurn()" />
+                            <img class="piece" ng-src="PicsForApp/BlackConcedes1.png" ng-show="hasConceded && blackTurn()" />
+                        </td>
+                        <td>
+                            <img class="piece" ng-src="PicsForApp/_.png" ng-show="!checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/Checkmate2.png" ng-show="checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/WhiteConcedes2.png" ng-show="hasConceded && !blackTurn()" />
+                            <img class="piece" ng-src="PicsForApp/BlackConcedes2.png" ng-show="hasConceded && blackTurn()" />
+                        </td>
+                        <td>
+                            <img class="piece" ng-src="PicsForApp/_.png" ng-show="!checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/Checkmate3.png" ng-show="checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/WhiteConcedes3.png" ng-show="hasConceded && !blackTurn()" />
+                            <img class="piece" ng-src="PicsForApp/BlackConcedes3.png" ng-show="hasConceded && blackTurn()" />
+                        </td>
+                        <td>
+                            <img class="piece" ng-src="PicsForApp/_.png" ng-show="!checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/Checkmate4.png" ng-show="checkmate && !hasConceded" />
+                            <img class="piece" ng-src="PicsForApp/WhiteConcedes4.png" ng-show="hasConceded && !blackTurn()" />
+                            <img class="piece" ng-src="PicsForApp/BlackConcedes4.png" ng-show="hasConceded && blackTurn()" />
+                        </td>
+
+                        <!--THE REST OF THAT ROW-->
+                        <td ng-repeat="n in [1, 2, 3, 4]">
+                            <img class="piece" ng-src="PicsForApp/_.png" />
+                        </td>
+
+                    </tr>
+
+                    <!--ROW 3-->
+                    <tr>
+                        <td ng-repeat="n in [1, 2, 3, 4, 5, 6, 7, 8]">
+                            <img class="piece" ng-src="PicsForApp/_.png" style="height: 5.5vw; max-height: 11vh"/>
+                        </td>
+                    </tr>
+
+
+                    <!--PIECES TAKEN BOX-->
+                    <tbody class="piecesTaken">
+
+                        <!--ROW 4-->
+                        <tr>
+
+                            <!--BOX TITLE-->
+                            <td class="box"><img class="piece" ng-src="PicsForApp/PiecesTaken1.png" /></td>
+                            <td class="box"><img class="piece" ng-src="PicsForApp/PiecesTaken2.png" /></td>
+
+                            <!--THE REST OF THAT ROW-->
+                            <td class="box" ng-repeat="n in [1, 2, 3, 4, 5, 6]">
+                                <img class="piece" ng-src="PicsForApp/_.png" />
+                            </td>
+
+                        </tr>
+
+                        <!--PIECES TAKEN, ROWS 5 to 8-->
+                        <tr ng-repeat="row in piecesTaken track by $index">
+                            <td ng-repeat="piece in row track by $index" class="box">
+                                <img class="piece" ng-src="PicsForApp/{{piece}}.png">
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
